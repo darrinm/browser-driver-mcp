@@ -144,7 +144,9 @@ same browser at once; the host routes each response back to its caller.
 - **Agent cursor.** Before each click, hover, drag or scroll, a blue arrow
   moves to the target, so you can follow what the agent does. Clicks squish
   the arrow and send out a ripple. The cursor is part of the indicator, so
-  screenshots never show it to the agent.
+  screenshots never show it to the agent. Each move takes 0.3-1.1 s; turn
+  off **Show the agent cursor** on the setup page (click the toolbar icon) to
+  skip it.
 - **The tab group is the boundary.** Your other tabs are never touched.
 - **The extension's own pages are off limits**, since they run with extension
   privileges.

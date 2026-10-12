@@ -105,6 +105,10 @@ async function refresh() {
   $("done").hidden = !(s.connected && s.clients > 0);
 }
 
+const showCursor = $("show-cursor");
+chrome.storage.local.get({ showCursor: true }).then((r) => { showCursor.checked = r.showCursor; });
+showCursor.addEventListener("change", () => chrome.storage.local.set({ showCursor: showCursor.checked }));
+
 renderTabs();
 refresh();
 setInterval(refresh, 1000);

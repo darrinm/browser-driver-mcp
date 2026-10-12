@@ -46,6 +46,9 @@
   .note { color: var(--muted); font-size: 14px; margin: 10px 0 0; }
   code { font: 13px "SF Mono", Menlo, Consolas, monospace; background: var(--code); padding: 1px 5px; border-radius: 5px; }
   a { color: var(--accent-ink); }
+  .setting { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+  .setting input { margin: 4px 0 0; accent-color: var(--accent); }
+  .setting .note { display: block; margin: 2px 0 0; }
   footer { color: var(--muted); font-size: 13px; margin-top: 28px; }
 </style>
 </head>
@@ -73,6 +76,12 @@
     <div class="snippet"><pre id="snippet"></pre><button class="copy" id="copy" type="button">Copy</button></div>
     <p class="note" id="snippet-note"></p>
     <p class="note">The first time your client starts the server, it installs the small connector this extension talks to (no admin rights, no open ports). Requires <a href="https://nodejs.org" target="_blank" rel="noopener">Node.js</a> 18 or newer.</p>
+  </section>
+
+  <section class="card">
+    <h2>Settings</h2>
+    <label class="setting"><input type="checkbox" id="show-cursor"> <span><b>Show the agent cursor</b>
+      <span class="note">A blue cursor glides to each click, hover, drag and scroll so you can follow along. Turn it off to make those actions 0.3–1.1 s faster.</span></span></label>
   </section>
 
   <section class="card">

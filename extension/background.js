@@ -46,6 +46,24 @@ function saveStopped() {
   return chrome.storage.session.set({ stoppedTabs: [...stoppedTabs] });
 }
 
+// Whether pointer actions show the agent cursor gliding to their target. Set
+// on the welcome page; turning it off skips the glide's 0.3-1.1 s wait.
+let showCursor = true;
+const settingsReady = chrome.storage.local.get({ showCursor: true }).then((r) => {
+  showCursor = r.showCursor;
+});
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "local" || !changes.showCursor) return;
+  showCursor = changes.showCursor.newValue !== false;
+  if (showCursor) return;
+  // Reinstall the indicator without a cursor on the pages being driven.
+  for (const [tabId, state] of tabs) {
+    state.cursor = null;
+    if (!state.attached || stoppedTabs.has(tabId)) continue;
+    runInFrame(tabId, 0, removeIndicator, []).then(() => runInFrame(tabId, 0, installIndicator, [null]));
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Native messaging bridge
 // ---------------------------------------------------------------------------
@@ -486,6 +504,8 @@ async function withIndicatorHidden(tabId, fn, buttonOnly = false) {
 // pointer action lands. Moves take 0.3-1.1 s by Fitts' law; `ms` instead
 // makes a straight move of that length, which `wait: false` doesn't wait for.
 async function glideCursor(tabId, { x, y, size }, { ms, wait = true } = {}) {
+  await settingsReady;
+  if (!showCursor) return;
   tabState(tabId).cursor = { x, y };
   const moving = runInFrame(tabId, 0, moveCursor, [x, y, { size, ms }]);
   if (!wait) return;
@@ -499,7 +519,7 @@ async function glideCursor(tabId, { x, y, size }, { ms, wait = true } = {}) {
 async function glideTo(tabId, target, label) {
   const p = await resolvePoint(tabId, target, label);
   await glideCursor(tabId, p);
-  if (target.ref == null) return p;
+  if (target.ref == null || !showCursor) return p;
   const q = await resolvePoint(tabId, target, label);
   if (Math.hypot(q.x - p.x, q.y - p.y) >= 1) await glideCursor(tabId, q);
   return q;
@@ -659,7 +679,7 @@ const handlers = {
     const p = await glideTo(tabId, { ref, x, y });
     return withIndicatorHidden(tabId, async () => {
       await mouse(tabId, "mouseMoved", p.x, p.y, { modifiers: mods });
-      runInFrame(tabId, 0, pressCursor, [p.x, p.y]);
+      if (showCursor) runInFrame(tabId, 0, pressCursor, [p.x, p.y]);
       for (let i = 1; i <= clickCount; i++) {
         await mouse(tabId, "mousePressed", p.x, p.y, { button, clickCount: i, modifiers: mods });
         await mouse(tabId, "mouseReleased", p.x, p.y, { button, clickCount: i, modifiers: mods });
@@ -694,7 +714,7 @@ const handlers = {
       await cdp(tabId, "Input.setInterceptDrags", { enabled: true });
       try {
         await mouse(tabId, "mouseMoved", a.x, a.y, { modifiers: mods });
-        runInFrame(tabId, 0, pressCursor, [a.x, a.y]);
+        if (showCursor) runInFrame(tabId, 0, pressCursor, [a.x, a.y]);
         await mouse(tabId, "mousePressed", a.x, a.y, { button: "left", clickCount: 1, modifiers: mods });
         const steps = 12;
         // Move the cursor along the pointer's straight line, over roughly the
